@@ -220,52 +220,54 @@ class NH_GK5_K2_Source {
 		for($i = 0; $i < count($content); $i++) {
 			$second_sql_where .= (($i != 0) ? ' OR ' : '') . ' content.id = ' . $content[$i]['id'];
 		}
-		// second SQL query to get rest of the data and avoid the DISTINCT
-		$second_query_news = '
-		SELECT
-			content.id AS id,
-			content.access AS access,
-			content.catid AS cid,
-			categories.name AS catname, 
-			categories.alias AS cat_alias,
-			users.email AS author_email,
-			content.created_by_alias AS author_alias,
-			content.created_by AS author_id,
-			content_rating.rating_sum AS rating_sum,
-			content_rating.rating_count AS rating_count		
-		FROM 
-			#__k2_items AS content 
-			LEFT JOIN 
-				#__k2_categories AS categories 
-				ON categories.id = content.catid 
-			LEFT JOIN 
-				#__users AS users 
-				ON users.id = content.created_by 			
-			LEFT JOIN 
-				#__k2_rating AS content_rating 
-				ON content_rating.itemID = content.id
-		WHERE 
-			'.$second_sql_where.'
-		ORDER BY 
-			'.$order_options.'
-		';
-		// run the query
-		$db->setQuery($second_query_news);
-		// when exist some results
-		if($news2 = $db->loadAssocList()) {
-			// create the iid array
-			$content_id = array();
-			// create the content IDs array
-			foreach($content as $item) {
-				array_push($content_id, $item['id']);
+		 if (!empty($second_sql_where)) {
+			// second SQL query to get rest of the data and avoid the DISTINCT
+			$second_query_news = '
+			SELECT
+				content.id AS id,
+				content.access AS access,
+				content.catid AS cid,
+				categories.name AS catname, 
+				categories.alias AS cat_alias,
+				users.email AS author_email,
+				content.created_by_alias AS author_alias,
+				content.created_by AS author_id,
+				content_rating.rating_sum AS rating_sum,
+				content_rating.rating_count AS rating_count		
+			FROM 
+				#__k2_items AS content 
+				LEFT JOIN 
+					#__k2_categories AS categories 
+					ON categories.id = content.catid 
+				LEFT JOIN 
+					#__users AS users 
+					ON users.id = content.created_by 			
+				LEFT JOIN 
+					#__k2_rating AS content_rating 
+					ON content_rating.itemID = content.id
+			WHERE 
+				'.$second_sql_where.'
+			ORDER BY 
+				'.$order_options.'
+			';
+			// run the query
+			$db->setQuery($second_query_news);
+			// when exist some results
+			if($news2 = $db->loadAssocList()) {
+				// create the iid array
+				$content_id = array();
+				// create the content IDs array
+				foreach($content as $item) {
+					array_push($content_id, $item['id']);
+				}
+				// generating tables of news data
+				foreach($news2 as $item) {						
+				    $pos = array_search($item['id'], $content_id);
+					// merge the new data to the array of items data
+					$content[$pos] = array_merge($content[$pos], (array) $item);
+				}
 			}
-			// generating tables of news data
-			foreach($news2 as $item) {						
-			    $pos = array_search($item['id'], $content_id);
-				// merge the new data to the array of items data
-				$content[$pos] = array_merge($content[$pos], (array) $item);
-			}
-		}
+		 }
 		// the content array
 		return $content; 
 	}
